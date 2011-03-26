@@ -4,6 +4,7 @@
 #include "Plane.h"
 #include "Sphere.h"
 #include "Matrix4x4.h"
+#include "Quad.h"
 #include "Vector.h"
 #include "Camera.h"
 #include <iostream>
@@ -22,6 +23,7 @@ class RayTracer
 	Color _background;
 	Pixel TraceRay(Plane & p, int index);
 	Pixel TraceRay(Sphere & s, int index);
+	Pixel TraceRay(Quad & q, int index);
 public: 
 	RayTracer(int width, int height, Color background);
 	~RayTracer(){};
@@ -34,5 +36,6 @@ public:
 	std::vector<Pixel> FetchPixels() { return _pixels; }
 	void RayCast(Plane & p);
 	void RayCast(Sphere & s);
+	void RayCast(Quad & q);
 	void RefreshPixels();
 };

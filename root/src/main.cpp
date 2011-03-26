@@ -39,6 +39,13 @@ int main()
 	sphere1._y0 = 0.0f;
 	sphere1._z0 = 0.1f;
 	sphere1._color = Color(1.0f, 0.0f, 1.0f);
+	Quad quad1;
+	quad1._b0 = Vector(-0.1f, 0.0f, 0.19f);
+	quad1._b1 = Vector(1.0f, 0.0f, 0.19f);
+	quad1._b2 = Vector(-0.1f, 1.0f, 0.19f);
+	quad1._height = 0.15f;
+	quad1._width = 0.2f;
+	quad1._color = Color(1.0f, 1.0f, 0.0f);
 
     while ( display.open() )
     {
@@ -46,6 +53,7 @@ int main()
 		rayTrace.RayCast(plane2);
 		rayTrace.RayCast(plane3);
 		rayTrace.RayCast(sphere1);
+		rayTrace.RayCast(quad1);
 
 		display.update( rayTrace.FetchPixels() );
     }

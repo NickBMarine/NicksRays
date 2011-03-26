@@ -21,9 +21,6 @@
     <ClCompile Include="..\src\Matrix4x4.cpp">
       <Filter>Math</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Ray.cpp">
-      <Filter>Math</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\Vector.cpp">
       <Filter>Math</Filter>
     </ClCompile>
@@ -67,6 +64,9 @@
     </ClInclude>
     <ClInclude Include="..\src\RayTracer.h">
       <Filter>Driver</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Quad.h">
+      <Filter>Math</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

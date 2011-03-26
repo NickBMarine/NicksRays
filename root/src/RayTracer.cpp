@@ -107,6 +107,73 @@ Pixel RayTracer::TraceRay(Sphere & s, int index)
 
 }
 
+void RayTracer::RayCast(Quad & q)
+{
+	int index;
+	float Sx = 2.0f/float(_width);
+	float Sy = 2.0f/-float(_height);
+	float Dx = -1.0f;
+	float Dy = 1.0f;
+	for (int y = 0; y < _height; y++)
+	{
+		for (int x = 0; x < _width; x++)
+		{
+			float tempX = x * Sx + Dx;
+			float tempY = y * Sy + Dy;
+			tempX *= _aspect;
+			_ray._a = tempX;
+			_ray._b = tempY;
+			_ray._c = 1.0f;
+			index = x + (y * _width);
+
+			_pixels[index] = TraceRay(q, index);
+		}
+	}
+}
+
+Pixel RayTracer::TraceRay(Quad & q, int index)
+{
+	Vector b1 = q._b1 - q._b0;
+	Vector b2 = q._b2 - q._b0;
+
+	b1.Normalize();
+	b2.Normalize();
+
+	Vector normal = b1.GetNormal(b2);
+
+	Plane tempPlane;
+	tempPlane._A = normal._x;
+	tempPlane._B = normal._y;
+	tempPlane._C = normal._z;
+	tempPlane._D = -(normal.GetDotProduct(q._b0));
+
+	_ray._t = -(tempPlane._A * _ray._x0 + tempPlane._B * _ray._y0 + tempPlane._C * _ray._z0 + tempPlane._D)
+			   /(tempPlane._A * _ray._a + tempPlane._B * _ray._b + tempPlane._C * _ray._c);
+
+	float tempX = _ray._x0 + _ray._t * _ray._a;
+	float tempY = _ray._y0 + _ray._t * _ray._b;
+	float tempZ = _ray._z0 + _ray._t * _ray._c;
+
+	Vector tempPoint(tempX, tempY, tempZ);
+
+	Vector tempVec = tempPoint - q._b0;
+
+	if ( _ray._t < _tBuffer[index] && _ray._t > 0.0f )
+	{
+		if (tempVec.GetDotProduct(b1) <= q._width && tempVec.GetDotProduct(b2) <= q._height
+			&& tempVec.GetDotProduct(b1) > 0.0f && tempVec.GetDotProduct(b2) > 0.0f)
+		{
+			_tBuffer[index] = _ray._t;
+			return (Pixel(q._color._r, q._color._g, q._color._b));
+		}
+		else
+			return (_pixels[index]);
+	}
+	else
+		return (_pixels[index]);
+
+}
+
 void RayTracer::RefreshTBuff()
 {
 	int size = _tBuffer.size();
