@@ -160,14 +160,55 @@ Pixel RayTracer::TraceRay(Quad & q, int index)
 
 	if ( _ray._t < _tBuffer[index] && _ray._t > 0.0f )
 	{
-		if (tempVec.GetDotProduct(b1) <= q._width && tempVec.GetDotProduct(b2) <= q._height
-			&& tempVec.GetDotProduct(b1) > 0.0f && tempVec.GetDotProduct(b2) > 0.0f)
+		if ( !q._grid)
 		{
-			_tBuffer[index] = _ray._t;
-			return (Pixel(q._color._r, q._color._g, q._color._b));
+			if (tempVec.GetDotProduct(b1) <= q._width && tempVec.GetDotProduct(b2) <= q._height
+				&& tempVec.GetDotProduct(b1) > 0.0f && tempVec.GetDotProduct(b2) > 0.0f)
+			{
+				_tBuffer[index] = _ray._t;
+				return (Pixel(q._color._r, q._color._g, q._color._b));
+			}
+			else
+				return (_pixels[index]);
 		}
 		else
-			return (_pixels[index]);
+		{
+			if (tempVec.GetDotProduct(b1) <= q._width && tempVec.GetDotProduct(b2) <= q._height
+				&& tempVec.GetDotProduct(b1) > 0.0f && tempVec.GetDotProduct(b2) > 0.0f)
+			{
+				_tBuffer[index] = _ray._t;
+				float tempPercent1 = tempVec.GetDotProduct(b1);
+				float tempPercent2 = tempVec.GetDotProduct(b2);
+				tempPercent1 = tempPercent1/q._width;
+				tempPercent2 = tempPercent2/q._height;
+
+				int whole1 = tempPercent1 * 10;
+				int whole2 = tempPercent2 * 10;
+
+				if (whole1 == 10)
+					whole1 = 9;
+				if (whole2 == 10)
+					whole2 = 9;
+
+				if (whole1 == 0 && whole2 == 0)
+				{
+					return Pixel(1.0f, 1.0f, 1.0f);
+				}
+				else if ( (whole1 % 2) == 0)
+				{
+					if ( (whole2 % 2) == 0)
+						return Pixel(0.0f, 0.0f, 0.0f);
+					return Pixel(1.0f, 1.0f, 1.0f);
+				}
+				else 
+				{
+					if ( (whole2 % 2) == 0)
+						return Pixel(1.0f, 1.0f, 1.0f);
+					return Pixel(0.0f, 0.0f, 0.0f);
+				}
+			}
+			return _pixels[index];
+		}
 	}
 	else
 		return (_pixels[index]);
@@ -179,7 +220,7 @@ void RayTracer::RefreshTBuff()
 	int size = _tBuffer.size();
 	for (int i = 0; i < size; i++)
 	{
-		_tBuffer[i] = 1.0f;
+		_tBuffer[i] = 5.0f;
 	}
 }
 

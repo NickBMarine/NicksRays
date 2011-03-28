@@ -1,5 +1,6 @@
 struct Quad
 {
+	bool _grid;
 	Color _color;
 	Vector _b0;
 	Vector _b1;
