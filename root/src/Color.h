@@ -9,6 +9,8 @@ struct Color
 	Color(float red, float green, float blue);
 	Color operator+(const Color &c) const;
 	Color operator-(const Color &c) const;
+	Color operator*(const Color &c) const;
+	friend Color operator*(const float & f, const Color &c);
 	Color operator*(float f) const;
 	Color operator/(float f) const;
 	bool operator!=(float f) const;

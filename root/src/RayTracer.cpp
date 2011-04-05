@@ -6,6 +6,9 @@ RayTracer::RayTracer(int width, int height, Color background)
 	_height = height;
 	_dirty = true;
 	_aspect = (float(_width)/float(_height));
+	_light._color = Color(1.0f, 1.0f, 1.0f);
+	_light._intensity = 1.0f;
+	_light._point = Vector(0.0f, 0.0f, 2.5f);
 	_background = background;
 	_camera.SetCameraForward(Vector(0,0,1));
 	_camera.SetCameraRight(Vector(1, 0, 0));
@@ -26,6 +29,7 @@ void RayTracer::RayCast(Plane & p)
 	float Sy = 2.0f/-float(_height);
 	float Dx = -1.0f;
 	float Dy = 1.0f;
+	_ray._c = 2.41f;
 	for (int y = 0; y < _height; y++)
 	{
 		for (int x = 0; x < _width; x++)
@@ -35,7 +39,6 @@ void RayTracer::RayCast(Plane & p)
 			tempX *= _aspect;
 			_ray._a = tempX;
 			_ray._b = tempY;
-			_ray._c = 1.0f;
 			index = x + (y * _width);
 
 			_pixels[index] = TraceRay(p, index);
@@ -48,13 +51,24 @@ Pixel RayTracer::TraceRay(Plane & p, int index)
 	_ray._t = -(p._A * _ray._x0 + p._B * _ray._y0 + p._C * _ray._z0 + p._D)
 			   /(p._A * _ray._a + p._B * _ray._b + p._C * _ray._c);
 	
+	Vector tempVec = ComputeVector(_ray._t);
+	Vector pointToLight = _light._point - tempVec;
+	pointToLight.Normalize();
+	Vector surfaceNorm = Vector(p._A, p._B, p._C);
+	surfaceNorm.Normalize();
+
+	float dot = min(1, max(pointToLight.GetDotProduct(surfaceNorm), 0));
+
+	Color lightColor = dot * _light._color * _light._intensity * p._color;
+
 	if ( _ray._t < 0.0f )
 		return _pixels[index];
 
 	else if ( _ray._t < _tBuffer[index])
 	{
 		_tBuffer[index] = _ray._t;
-		return Pixel(p._color._r, p._color._g, p._color._b);
+		//return Pixel(p._color._r, p._color._g, p._color._b);
+		return Pixel(lightColor._r, lightColor._g, lightColor._b);
 	}
 	else
 		return _pixels[index];
@@ -67,6 +81,7 @@ void RayTracer::RayCast(Sphere & s)
 	float Sy = 2.0f/-float(_height);
 	float Dx = -1.0f;
 	float Dy = 1.0f;
+	_ray._c = 2.41f;
 	for (int y = 0; y < _height; y++)
 	{
 		for (int x = 0; x < _width; x++)
@@ -76,7 +91,6 @@ void RayTracer::RayCast(Sphere & s)
 			tempX *= _aspect;
 			_ray._a = tempX;
 			_ray._b = tempY;
-			_ray._c = 1.0f;
 			index = x + (y * _width);
 
 			_pixels[index] = TraceRay(s, index);
@@ -87,19 +101,31 @@ void RayTracer::RayCast(Sphere & s)
 Pixel RayTracer::TraceRay(Sphere & s, int index)
 {
 	float a = (pow(_ray._a, 2) + pow(_ray._b, 2) + (pow(_ray._c, 2)));
-	float b = (2 * _ray._a * ( _ray._x0 - s._x0) + 2 * _ray._b * (_ray._y0 - s._y0) + 2 * _ray._c * (_ray._z0 - s._z0));
-	float c = ( pow(_ray._x0 - s._x0, 2) + pow(_ray._y0 - s._y0, 2) + pow(_ray._z0 - s._z0, 2) - pow(s._r, 2));
-	float disc = sqrt(pow(b,2) -( 4 * a * c));
+	float b = 2 * (_ray._a * ( _ray._x0 - s._x0) + _ray._b * (_ray._y0 - s._y0) + _ray._c * (_ray._z0 - s._z0));
+	float c = ( pow(_ray._x0 - s._x0, 2) + pow(_ray._y0 - s._y0, 2) + pow(_ray._z0 - s._z0, 2) - pow(s._r,2));
+	float disc = pow(b,2) -( 4 * a * c);
+
 
 	if ( disc < 0 )
 		return _pixels[index];
 	else
 	{
-		float tTemp = min((-b + sqrt(pow(b,2) - (4 * a * c)) / (2 * a)), (-b - sqrt(pow(b,2) - (4 * a * c)) / (2 * a)));
+		float tTemp = min((-b + sqrt(disc)) / (2 * a), (-b - sqrt(disc)) / (2 * a));
+
+		Vector tempVec = ComputeVector(tTemp);
+		Vector pointToLight = _light._point - tempVec;
+		pointToLight.Normalize();
+		Vector surfaceNorm = tempVec - Vector(s._x0, s._y0, s._z0);
+		surfaceNorm.Normalize();
+
+		float dot = min(1, max(pointToLight.GetDotProduct(surfaceNorm), 0));
+
+		Color lightColor = dot * _light._color * _light._intensity * s._color;
+
 		if ( tTemp < _tBuffer[index] )
 		{
 			_tBuffer[index] = tTemp;
-			return Pixel(s._color._r, s._color._g, s._color._b);
+			return Pixel(lightColor._r, lightColor._g, lightColor._b);
 		}
 		else
 			return _pixels[index];
@@ -114,6 +140,7 @@ void RayTracer::RayCast(Quad & q)
 	float Sy = 2.0f/-float(_height);
 	float Dx = -1.0f;
 	float Dy = 1.0f;
+	_ray._c = 2.41f;
 	for (int y = 0; y < _height; y++)
 	{
 		for (int x = 0; x < _width; x++)
@@ -123,7 +150,6 @@ void RayTracer::RayCast(Quad & q)
 			tempX *= _aspect;
 			_ray._a = tempX;
 			_ray._b = tempY;
-			_ray._c = 1.0f;
 			index = x + (y * _width);
 
 			_pixels[index] = TraceRay(q, index);
@@ -139,7 +165,7 @@ Pixel RayTracer::TraceRay(Quad & q, int index)
 	b1.Normalize();
 	b2.Normalize();
 
-	Vector normal = b1.GetNormal(b2);
+	Vector normal = b2.GetNormal(b1);
 
 	Plane tempPlane;
 	tempPlane._A = normal._x;
@@ -149,6 +175,18 @@ Pixel RayTracer::TraceRay(Quad & q, int index)
 
 	_ray._t = -(tempPlane._A * _ray._x0 + tempPlane._B * _ray._y0 + tempPlane._C * _ray._z0 + tempPlane._D)
 			   /(tempPlane._A * _ray._a + tempPlane._B * _ray._b + tempPlane._C * _ray._c);
+
+	Vector tempVector = ComputeVector(_ray._t);
+	Vector pointToLight = _light._point - tempVector;
+	pointToLight.Normalize();
+	Vector surfaceNorm = Vector(tempPlane._A, tempPlane._B, tempPlane._C);
+	surfaceNorm.Normalize();
+
+	float dot = min(1, max(pointToLight.GetDotProduct(surfaceNorm), 0));
+
+	Color lightColor = dot * _light._color * _light._intensity * Color(1.0f, 1.0f, 1.0f);
+
+
 
 	float tempX = _ray._x0 + _ray._t * _ray._a;
 	float tempY = _ray._y0 + _ray._t * _ray._b;
@@ -166,7 +204,7 @@ Pixel RayTracer::TraceRay(Quad & q, int index)
 				&& tempVec.GetDotProduct(b1) > 0.0f && tempVec.GetDotProduct(b2) > 0.0f)
 			{
 				_tBuffer[index] = _ray._t;
-				return (Pixel(q._color._r, q._color._g, q._color._b));
+				return (Pixel(lightColor._r, lightColor._g, lightColor._b));
 			}
 			else
 				return (_pixels[index]);
@@ -192,18 +230,23 @@ Pixel RayTracer::TraceRay(Quad & q, int index)
 
 				if (whole1 == 0 && whole2 == 0)
 				{
-					return Pixel(1.0f, 1.0f, 1.0f);
+					//return Pixel(1.0f, 1.0f, 1.0f);
+					return Pixel(lightColor._r, lightColor._g, lightColor._b);
 				}
 				else if ( (whole1 % 2) == 0)
 				{
 					if ( (whole2 % 2) == 0)
+					{
 						return Pixel(0.0f, 0.0f, 0.0f);
-					return Pixel(1.0f, 1.0f, 1.0f);
+					}
+					//return Pixel(1.0f, 1.0f, 1.0f);
+					return Pixel(lightColor._r, lightColor._g, lightColor._b);
 				}
 				else 
 				{
 					if ( (whole2 % 2) == 0)
-						return Pixel(1.0f, 1.0f, 1.0f);
+						//return Pixel(1.0f, 1.0f, 1.0f);
+						return Pixel(lightColor._r, lightColor._g, lightColor._b);
 					return Pixel(0.0f, 0.0f, 0.0f);
 				}
 			}
@@ -230,7 +273,16 @@ void RayTracer::RefreshPixels()
 	for ( int i = 0; i < size; i++)
 	{
 		_pixels[i] = Pixel(_background._r, _background._g, _background._b);
+		_tBuffer[i] = 5.0f;
 	}
 
 }
 
+Vector RayTracer::ComputeVector(float scalar)
+{
+	float x = _ray._x0 + scalar * _ray._a;
+	float y = _ray._y0 + scalar * _ray._b;
+	float z = _ray._z0 + scalar * _ray._c;
+
+	return (Vector(x, y, z));
+}

@@ -7,6 +7,7 @@
 #include "Quad.h"
 #include "Vector.h"
 #include "Camera.h"
+#include "Light.h"
 #include <iostream>
 using namespace PixelToaster;
 
@@ -16,6 +17,7 @@ class RayTracer
 	std::vector<Pixel> _pixels;
 	std::vector<float> _tBuffer;
 	Ray _ray;
+	Light _light;
 	bool _dirty;
 	int _width;
 	int _height;
@@ -27,11 +29,13 @@ class RayTracer
 public: 
 	RayTracer(int width, int height, Color background);
 	~RayTracer(){};
-
+	
+	void SetPointLight(Light l) { _light = l;};
 	void SetBackground(Color background){ _background = background;};
 	void SetWidth(int width) { _width;};
 	void SetHeight(int height) { _height;};
 	void SetCamera(Vector upVec, Vector forwardVec, Vector sideVec);
+	Vector ComputeVector(float scalar);
 	void RefreshTBuff();
 	std::vector<Pixel> FetchPixels() { return _pixels; }
 	void RayCast(Plane & p);

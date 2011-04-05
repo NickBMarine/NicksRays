@@ -69,6 +69,27 @@ Color Color::operator*(float f) const
 	return tempColor;
 }
 
+Color operator*(const float & f, const Color & c)
+{
+	Color tempColor;
+	tempColor._b = f * c._b;
+	tempColor._g = f * c._g;
+	tempColor._r = f * c._r;
+
+	return tempColor;
+}
+
+Color Color::operator*(const Color & c) const
+{
+	Color tempColor;
+
+	tempColor._b = _b * c._b;
+	tempColor._r = _r * c._r;
+	tempColor._g = _g * c._g;
+
+	return tempColor;
+}
+
 Color Color::operator/(float f) const
 {
 	Color tempColor;

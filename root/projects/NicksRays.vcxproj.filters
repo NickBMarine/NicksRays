@@ -68,5 +68,8 @@
     <ClInclude Include="..\src\Quad.h">
       <Filter>Math</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\Light.h">
+      <Filter>Light/Color</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
