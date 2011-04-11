@@ -8,7 +8,7 @@ RayTracer::RayTracer(int width, int height, Color background)
 	_aspect = (float(_width)/float(_height));
 	_light._color = Color(1.0f, 1.0f, 1.0f);
 	_light._intensity = 1.0f;
-	_light._point = Vector(0.0f, 0.0f, 2.5f);
+	_light._point = Vector(0.0f, 0.75f, 2.5f);
 	_background = background;
 	_camera.SetCameraForward(Vector(0,0,1));
 	_camera.SetCameraRight(Vector(1, 0, 0));
@@ -53,13 +53,17 @@ Pixel RayTracer::TraceRay(Plane & p, int index)
 	
 	Vector tempVec = ComputeVector(_ray._t);
 	Vector pointToLight = _light._point - tempVec;
+	float pointToLightMag = pointToLight.GetMagnitude();
+	float atten = (1.0f / pow(pointToLightMag, 2));
 	pointToLight.Normalize();
 	Vector surfaceNorm = Vector(p._A, p._B, p._C);
 	surfaceNorm.Normalize();
 
 	float dot = min(1, max(pointToLight.GetDotProduct(surfaceNorm), 0));
 
-	Color lightColor = dot * _light._color * _light._intensity * p._color;
+
+
+	Color lightColor = dot * _light._color * _light._intensity * p._color * atten;
 
 	if ( _ray._t < 0.0f )
 		return _pixels[index];
@@ -114,13 +118,15 @@ Pixel RayTracer::TraceRay(Sphere & s, int index)
 
 		Vector tempVec = ComputeVector(tTemp);
 		Vector pointToLight = _light._point - tempVec;
+		float pointToLightMag = pointToLight.GetMagnitude();
+		float atten = (1.0f / pow(pointToLightMag, 2));
 		pointToLight.Normalize();
 		Vector surfaceNorm = tempVec - Vector(s._x0, s._y0, s._z0);
 		surfaceNorm.Normalize();
 
 		float dot = min(1, max(pointToLight.GetDotProduct(surfaceNorm), 0));
 
-		Color lightColor = dot * _light._color * _light._intensity * s._color;
+		Color lightColor = dot * _light._color * _light._intensity * s._color * atten;
 
 		if ( tTemp < _tBuffer[index] )
 		{
@@ -178,13 +184,15 @@ Pixel RayTracer::TraceRay(Quad & q, int index)
 
 	Vector tempVector = ComputeVector(_ray._t);
 	Vector pointToLight = _light._point - tempVector;
+	float pointToLightMag = pointToLight.GetMagnitude();
+    float atten = (1.0f / pow(pointToLightMag, 2));
 	pointToLight.Normalize();
 	Vector surfaceNorm = Vector(tempPlane._A, tempPlane._B, tempPlane._C);
 	surfaceNorm.Normalize();
 
 	float dot = min(1, max(pointToLight.GetDotProduct(surfaceNorm), 0));
 
-	Color lightColor = dot * _light._color * _light._intensity * Color(1.0f, 1.0f, 1.0f);
+	Color lightColor = dot * _light._color * _light._intensity * Color(1.0f, 1.0f, 1.0f) * atten;
 
 
 

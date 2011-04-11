@@ -65,15 +65,15 @@ int main()
     {
 		if (GetAsyncKeyState(KEY_W) != 0)
 		{
-			sphere1._y0 -= .05;
+			sphere2._y0 -= .05;
 		}
 		if (GetAsyncKeyState(KEY_A) != 0)
 		{
-			sphere1._z0 += .01;
+			sphere2._z0 += .01;
 		}
 		if (GetAsyncKeyState(KEY_S) != 0)
 		{
-			sphere1._x0 += .01;
+			sphere2._z0 -= .05;
 		}
 		rayTrace.RayCast(plane1);
 		rayTrace.RayCast(plane2);
