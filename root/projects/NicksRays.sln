@@ -17,4 +17,7 @@ Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		AMDCaProjectFile = C:\Game Theory\NicksRays\root\projects\CodeAnalyst\NicksRays.caw
+	EndGlobalSection
 EndGlobal

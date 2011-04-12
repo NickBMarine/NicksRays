@@ -4,6 +4,10 @@ RayTracer::RayTracer(int width, int height, Color background)
 {
 	_width = width;
 	_height = height;
+	_numSurfaces = 0;
+	_numPlanes = 0;
+	_numQuads = 0;
+	_numSpheres = 0;
 	_dirty = true;
 	_aspect = (float(_width)/float(_height));
 	_light._color = Color(1.0f, 1.0f, 1.0f);
@@ -22,14 +26,14 @@ RayTracer::RayTracer(int width, int height, Color background)
 	_ray._z0 = 0.0f;
 }
 
-void RayTracer::RayCast(Plane & p)
+void RayTracer::CreateScene()
 {
 	int index;
 	float Sx = 2.0f/float(_width);
 	float Sy = 2.0f/-float(_height);
 	float Dx = -1.0f;
 	float Dy = 1.0f;
-	_ray._c = 2.41f;
+	_ray._c = 2.41;
 	for (int y = 0; y < _height; y++)
 	{
 		for (int x = 0; x < _width; x++)
@@ -41,17 +45,134 @@ void RayTracer::RayCast(Plane & p)
 			_ray._b = tempY;
 			index = x + (y * _width);
 
-			_pixels[index] = TraceRay(p, index);
+			RayCast(index);
 		}
-	}
+	}	
 }
 
-Pixel RayTracer::TraceRay(Plane & p, int index)
+void RayTracer::RayCast(int index)
+{
+	Color tempColor = _background;
+	float tempT = _tBuffer[index];
+	Ray tempRay = _ray;
+	if (_numSurfaces != 0)
+	{
+		//First check to see if the camera rays hits anything
+		for (int i = 0; i < _numSpheres; i++)
+		{
+			TraceRay(_spheres[i], tempRay, tempColor, tempT);
+		}
+
+		for (int i = 0; i < _numQuads; i++)
+		{
+			TraceRay(_quads[i], tempRay, tempColor, tempT);
+		}
+
+		for (int i = 0; i < _numPlanes; i++)
+		{
+			TraceRay(_planes[i], tempRay, tempColor, tempT);
+		}
+
+	    _tBuffer[index] = tempT;
+	    _pixels[index] = Pixel(tempColor._r, tempColor._g, tempColor._b);
+
+		Vector vecToLight = _light._point - ComputeVector(tempT);
+		float dToLight = vecToLight.GetMagnitude();
+		vecToLight.Normalize();
+		Ray tempRay = ComputeRay(ComputeVector(tempT), vecToLight);
+		tempRay._t = dToLight;
+
+		//Now lets see if an object is blocking the light of another
+		for (int i = 0; i < _numSpheres; i++)
+		{
+			TraceLightRay(_spheres[i], tempRay, dToLight);
+		}
+
+		for (int i = 0; i < _numQuads; i++)
+		{
+			TraceLightRay(_quads[i], tempRay, dToLight);
+		}
+
+		for (int i = 0; i < _numPlanes; i++)
+		{
+			TraceLightRay(_planes[i], tempRay, dToLight);
+		}
+
+		if ( tempRay._t < dToLight)
+		{
+			_pixels[index] = Pixel(0.0f, 0.0f, 0.0f);
+		}
+	}
+	else
+		return;
+
+
+}
+
+void RayTracer::TraceLightRay(Plane & p, Ray & r, float & t)
+{
+	float tempT;
+	tempT = -(p._A * r._x0 + p._B * r._y0 + p._C * r._z0 + p._D)
+			   /(p._A * r._a + p._B * r._b + p._C * r._c);
+	if (tempT <= 0)
+		return;
+	if (tempT < t)
+		r._t = tempT;
+}
+
+void RayTracer::TraceLightRay(Sphere & s, Ray & r, float & t)
+{
+	float a = (pow(r._a, 2) + pow(r._b, 2) + (pow(r._c, 2)));
+	float b = 2 * (r._a * ( r._x0 - s._x0) + r._b * (r._y0 - s._y0) + r._c * (r._z0 - s._z0));
+	float c = ( pow(r._x0 - s._x0, 2) + pow(r._y0 - s._y0, 2) + pow(r._z0 - s._z0, 2) - pow(s._r,2));
+	float disc = pow(b,2) - ( 4 * a * c);
+
+	if (disc < 0)
+		return;
+
+	float tTemp = min((-b + sqrt(disc)) / (2 * a), (-b - sqrt(disc)) / (2 * a));
+
+	if (tTemp <= 0)
+		return;
+
+
+	if (tTemp < t)
+		r._t = tTemp;
+}
+
+void RayTracer::TraceLightRay(Quad & q, Ray & r, float & t)
+{
+	float tempT;
+	Vector b1 = q._b1 - q._b0;
+	Vector b2 = q._b2 - q._b0;
+
+	b1.Normalize();
+	b2.Normalize();
+
+	Vector normal = b2.GetNormal(b1);
+
+	Plane tempPlane;
+	tempPlane._A = normal._x;
+	tempPlane._B = normal._y;
+	tempPlane._C = normal._z;
+	tempPlane._D = -(normal.GetDotProduct(q._b0));
+
+	tempT = -(tempPlane._A * r._x0 + tempPlane._B * r._y0 + tempPlane._C * r._z0 + tempPlane._D)
+			   /(tempPlane._A * r._a + tempPlane._B * r._b + tempPlane._C * r._c);
+
+	if (tempT <= 0)
+		return;
+
+	if (tempT < t)
+		r._t = t;
+}
+
+void RayTracer::TraceRay(Plane & p, Ray & r, Color & col, float & t)
 {	
-	_ray._t = -(p._A * _ray._x0 + p._B * _ray._y0 + p._C * _ray._z0 + p._D)
-			   /(p._A * _ray._a + p._B * _ray._b + p._C * _ray._c);
+	r._t = -(p._A * r._x0 + p._B * r._y0 + p._C * r._z0 + p._D)
+			   /(p._A * r._a + p._B * r._b + p._C * r._c);
 	
-	Vector tempVec = ComputeVector(_ray._t);
+	Vector tempVec = ComputeVector(r._t);
 	Vector pointToLight = _light._point - tempVec;
 	float pointToLightMag = pointToLight.GetMagnitude();
 	float atten = (1.0f / pow(pointToLightMag, 2));
@@ -65,53 +186,30 @@ Pixel RayTracer::TraceRay(Plane & p, int index)
 
 	Color lightColor = dot * _light._color * _light._intensity * p._color * atten;
 
-	if ( _ray._t < 0.0f )
-		return _pixels[index];
 
-	else if ( _ray._t < _tBuffer[index])
+	if ( r._t <= 0.0f )
+		return;
+
+	else if ( r._t < t)
 	{
-		_tBuffer[index] = _ray._t;
-		//return Pixel(p._color._r, p._color._g, p._color._b);
-		return Pixel(lightColor._r, lightColor._g, lightColor._b);
+		t = r._t;
+		col = lightColor;
+		return;
 	}
 	else
-		return _pixels[index];
+		return;
 }
 
-void RayTracer::RayCast(Sphere & s)
+void RayTracer::TraceRay(Sphere & s, Ray & r, Color & col, float & t)
 {
-	int index;
-	float Sx = 2.0f/float(_width);
-	float Sy = 2.0f/-float(_height);
-	float Dx = -1.0f;
-	float Dy = 1.0f;
-	_ray._c = 2.41f;
-	for (int y = 0; y < _height; y++)
-	{
-		for (int x = 0; x < _width; x++)
-		{
-			float tempX = x * Sx + Dx;
-			float tempY = y * Sy + Dy;
-			tempX *= _aspect;
-			_ray._a = tempX;
-			_ray._b = tempY;
-			index = x + (y * _width);
-
-			_pixels[index] = TraceRay(s, index);
-		}
-	}
-}
-
-Pixel RayTracer::TraceRay(Sphere & s, int index)
-{
-	float a = (pow(_ray._a, 2) + pow(_ray._b, 2) + (pow(_ray._c, 2)));
-	float b = 2 * (_ray._a * ( _ray._x0 - s._x0) + _ray._b * (_ray._y0 - s._y0) + _ray._c * (_ray._z0 - s._z0));
-	float c = ( pow(_ray._x0 - s._x0, 2) + pow(_ray._y0 - s._y0, 2) + pow(_ray._z0 - s._z0, 2) - pow(s._r,2));
-	float disc = pow(b,2) -( 4 * a * c);
+	float a = (pow(r._a, 2) + pow(r._b, 2) + (pow(r._c, 2)));
+	float b = 2 * (r._a * ( r._x0 - s._x0) + r._b * (r._y0 - s._y0) + r._c * (r._z0 - s._z0));
+	float c = ( pow(r._x0 - s._x0, 2) + pow(r._y0 - s._y0, 2) + pow(r._z0 - s._z0, 2) - pow(s._r,2));
+	float disc = pow(b,2) - ( 4 * a * c);
 
 
 	if ( disc < 0 )
-		return _pixels[index];
+		return;
 	else
 	{
 		float tTemp = min((-b + sqrt(disc)) / (2 * a), (-b - sqrt(disc)) / (2 * a));
@@ -128,42 +226,18 @@ Pixel RayTracer::TraceRay(Sphere & s, int index)
 
 		Color lightColor = dot * _light._color * _light._intensity * s._color * atten;
 
-		if ( tTemp < _tBuffer[index] )
+		if ( tTemp < t )
 		{
-			_tBuffer[index] = tTemp;
-			return Pixel(lightColor._r, lightColor._g, lightColor._b);
+			t = tTemp;
+			col = lightColor;
 		}
 		else
-			return _pixels[index];
+			return;
 	}
 
 }
 
-void RayTracer::RayCast(Quad & q)
-{
-	int index;
-	float Sx = 2.0f/float(_width);
-	float Sy = 2.0f/-float(_height);
-	float Dx = -1.0f;
-	float Dy = 1.0f;
-	_ray._c = 2.41f;
-	for (int y = 0; y < _height; y++)
-	{
-		for (int x = 0; x < _width; x++)
-		{
-			float tempX = x * Sx + Dx;
-			float tempY = y * Sy + Dy;
-			tempX *= _aspect;
-			_ray._a = tempX;
-			_ray._b = tempY;
-			index = x + (y * _width);
-
-			_pixels[index] = TraceRay(q, index);
-		}
-	}
-}
-
-Pixel RayTracer::TraceRay(Quad & q, int index)
+void RayTracer::TraceRay(Quad & q, Ray & r, Color & col, float & t)
 {
 	Vector b1 = q._b1 - q._b0;
 	Vector b2 = q._b2 - q._b0;
@@ -179,10 +253,10 @@ Pixel RayTracer::TraceRay(Quad & q, int index)
 	tempPlane._C = normal._z;
 	tempPlane._D = -(normal.GetDotProduct(q._b0));
 
-	_ray._t = -(tempPlane._A * _ray._x0 + tempPlane._B * _ray._y0 + tempPlane._C * _ray._z0 + tempPlane._D)
-			   /(tempPlane._A * _ray._a + tempPlane._B * _ray._b + tempPlane._C * _ray._c);
+	r._t = -(tempPlane._A * r._x0 + tempPlane._B * r._y0 + tempPlane._C * r._z0 + tempPlane._D)
+			   /(tempPlane._A * r._a + tempPlane._B * r._b + tempPlane._C * r._c);
 
-	Vector tempVector = ComputeVector(_ray._t);
+	Vector tempVector = ComputeVector(r._t);
 	Vector pointToLight = _light._point - tempVector;
 	float pointToLightMag = pointToLight.GetMagnitude();
     float atten = (1.0f / pow(pointToLightMag, 2));
@@ -196,33 +270,34 @@ Pixel RayTracer::TraceRay(Quad & q, int index)
 
 
 
-	float tempX = _ray._x0 + _ray._t * _ray._a;
-	float tempY = _ray._y0 + _ray._t * _ray._b;
-	float tempZ = _ray._z0 + _ray._t * _ray._c;
+	float tempX = r._x0 + r._t * r._a;
+	float tempY = r._y0 + r._t * r._b;
+	float tempZ = r._z0 + r._t * r._c;
 
 	Vector tempPoint(tempX, tempY, tempZ);
 
 	Vector tempVec = tempPoint - q._b0;
 
-	if ( _ray._t < _tBuffer[index] && _ray._t > 0.0f )
+	if ( r._t < t && r._t > 0.0f )
 	{
 		if ( !q._grid)
 		{
 			if (tempVec.GetDotProduct(b1) <= q._width && tempVec.GetDotProduct(b2) <= q._height
 				&& tempVec.GetDotProduct(b1) > 0.0f && tempVec.GetDotProduct(b2) > 0.0f)
 			{
-				_tBuffer[index] = _ray._t;
-				return (Pixel(lightColor._r, lightColor._g, lightColor._b));
+				t = r._t;
+				col = lightColor;
+				return;
 			}
 			else
-				return (_pixels[index]);
+				return;
 		}
 		else
 		{
 			if (tempVec.GetDotProduct(b1) <= q._width && tempVec.GetDotProduct(b2) <= q._height
 				&& tempVec.GetDotProduct(b1) > 0.0f && tempVec.GetDotProduct(b2) > 0.0f)
 			{
-				_tBuffer[index] = _ray._t;
+				t = r._t;
 				float tempPercent1 = tempVec.GetDotProduct(b1);
 				float tempPercent2 = tempVec.GetDotProduct(b2);
 				tempPercent1 = tempPercent1/q._width;
@@ -238,31 +313,35 @@ Pixel RayTracer::TraceRay(Quad & q, int index)
 
 				if (whole1 == 0 && whole2 == 0)
 				{
-					//return Pixel(1.0f, 1.0f, 1.0f);
-					return Pixel(lightColor._r, lightColor._g, lightColor._b);
+					col = lightColor;
+					return;
 				}
 				else if ( (whole1 % 2) == 0)
 				{
 					if ( (whole2 % 2) == 0)
 					{
-						return Pixel(0.0f, 0.0f, 0.0f);
+						col = Color(0.0f, 0.0f, 0.0f);
+						return;
 					}
-					//return Pixel(1.0f, 1.0f, 1.0f);
-					return Pixel(lightColor._r, lightColor._g, lightColor._b);
+					col = lightColor;
+					return;
 				}
 				else 
 				{
 					if ( (whole2 % 2) == 0)
-						//return Pixel(1.0f, 1.0f, 1.0f);
-						return Pixel(lightColor._r, lightColor._g, lightColor._b);
-					return Pixel(0.0f, 0.0f, 0.0f);
+					{
+						col = lightColor;
+						return;
+					}
+					col = Color(0.0f, 0.0f, 0.0f);
+					return;
 				}
 			}
-			return _pixels[index];
+			return;
 		}
 	}
 	else
-		return (_pixels[index]);
+		return;
 
 }
 
@@ -293,4 +372,37 @@ Vector RayTracer::ComputeVector(float scalar)
 	float z = _ray._z0 + scalar * _ray._c;
 
 	return (Vector(x, y, z));
+}
+
+Ray RayTracer::ComputeRay(Vector & orig, Vector & dir)
+{
+	Ray tempRay;
+	tempRay._x0 = orig._x;
+	tempRay._y0 = orig._y;
+	tempRay._z0 = orig._z;
+	tempRay._a = dir._x;
+	tempRay._b = dir._y;
+	tempRay._c = dir._z;
+	return tempRay;
+}
+
+void RayTracer::AddSurface(Sphere & sphere)
+{
+	_spheres.push_back(sphere);
+	_numSpheres++;
+	_numSurfaces++;
+}
+
+void RayTracer::AddSurface(Quad & quad)
+{
+	_quads.push_back(quad);
+	_numQuads++;
+	_numSurfaces++;
+}
+
+void RayTracer::AddSurface(Plane & plane)
+{
+	_planes.push_back(plane);
+	_numPlanes++;
+	_numSurfaces++;
 }

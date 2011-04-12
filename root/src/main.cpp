@@ -43,13 +43,13 @@ int main()
 	Sphere sphere1;
 	sphere1._r = 0.3f;
 	sphere1._x0 = -0.4f;
-	sphere1._y0 = -0.08f;
-	sphere1._z0 = 4.0f;
+	sphere1._y0 = -0.2f;
+	sphere1._z0 = 2.0f;
 	sphere1._color = Color(1.0f, 0.0f, 1.0f);
 	Sphere sphere2;
 	sphere2._r = 0.3f;
 	sphere2._x0 = 0.4f;
-	sphere2._y0 = -0.05f;
+	sphere2._y0 = -0.1f;
 	sphere2._z0 = 3.0f;
 	sphere2._color = Color(1.0f, 1.0f, 0.0f);
 	Quad quad1;
@@ -60,6 +60,14 @@ int main()
 	quad1._width = 8.0f;
 	quad1._color = Color(1.0f, 1.0f, 0.0f);
 	quad1._grid = true;
+
+	rayTrace.AddSurface(plane1);
+	rayTrace.AddSurface(plane2);
+	rayTrace.AddSurface(plane3);
+	rayTrace.AddSurface(plane4);
+	rayTrace.AddSurface(sphere1);
+	rayTrace.AddSurface(sphere2);
+	rayTrace.AddSurface(quad1);
 
     while ( display.open() )
     {
@@ -75,13 +83,8 @@ int main()
 		{
 			sphere2._z0 -= .05;
 		}
-		rayTrace.RayCast(plane1);
-		rayTrace.RayCast(plane2);
-		rayTrace.RayCast(plane3);
-		rayTrace.RayCast(plane4);
-		rayTrace.RayCast(sphere1);
-		rayTrace.RayCast(sphere2);
-		rayTrace.RayCast(quad1);
+
+		rayTrace.CreateScene();
 
 		display.update( rayTrace.FetchPixels() );
 		rayTrace.RefreshPixels();
