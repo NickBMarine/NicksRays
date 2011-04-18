@@ -168,11 +168,16 @@ void RayTracer::TraceLightRay(Quad & q, Ray & r, float & t)
 }
 
 void RayTracer::TraceRay(Plane & p, Ray & r, Color & col, float & t)
-{	
+{
+	Vector origin = Vector(r._x0, r._y0, r._z0);
 	r._t = -(p._A * r._x0 + p._B * r._y0 + p._C * r._z0 + p._D)
 			   /(p._A * r._a + p._B * r._b + p._C * r._c);
 	
 	Vector tempVec = ComputeVector(r._t);
+	Vector dirToPlane = tempVec - origin;
+	if ( dirToPlane.GetDotProduct(Vector(p._A, p._B, p._C)) > 0)
+		return;
+
 	Vector pointToLight = _light._point - tempVec;
 	float pointToLightMag = pointToLight.GetMagnitude();
 	float atten = (1.0f / pow(pointToLightMag, 2));
@@ -239,6 +244,7 @@ void RayTracer::TraceRay(Sphere & s, Ray & r, Color & col, float & t)
 
 void RayTracer::TraceRay(Quad & q, Ray & r, Color & col, float & t)
 {
+	Vector origin = Vector(r._x0, r._y0, r._z0);
 	Vector b1 = q._b1 - q._b0;
 	Vector b2 = q._b2 - q._b0;
 
@@ -257,6 +263,10 @@ void RayTracer::TraceRay(Quad & q, Ray & r, Color & col, float & t)
 			   /(tempPlane._A * r._a + tempPlane._B * r._b + tempPlane._C * r._c);
 
 	Vector tempVector = ComputeVector(r._t);
+	Vector dirToPlane = tempVector - origin;
+	if ( dirToPlane.GetDotProduct(Vector(normal._x, normal._y, normal._z)) > 0)
+		return;
+
 	Vector pointToLight = _light._point - tempVector;
 	float pointToLightMag = pointToLight.GetMagnitude();
     float atten = (1.0f / pow(pointToLightMag, 2));

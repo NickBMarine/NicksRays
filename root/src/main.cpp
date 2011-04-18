@@ -40,6 +40,12 @@ int main()
 	plane4._C = 0.0f;
 	plane4._D = 1.0f;
 	plane4._color = Color(0.0f, 0.0f, 1.0f);
+	Plane plane5;
+	plane5._A = 0.0f;
+	plane5._B = 0.0f;
+	plane5._C = 1.0f;
+	plane5._D = -1.0f;
+	plane5._color = Color(0.5f, 0.5f, 1.0f);
 	Sphere sphere1;
 	sphere1._r = 0.3f;
 	sphere1._x0 = -0.4f;
@@ -65,6 +71,7 @@ int main()
 	rayTrace.AddSurface(plane2);
 	rayTrace.AddSurface(plane3);
 	rayTrace.AddSurface(plane4);
+	rayTrace.AddSurface(plane5);
 	rayTrace.AddSurface(sphere1);
 	rayTrace.AddSurface(sphere2);
 	rayTrace.AddSurface(quad1);
