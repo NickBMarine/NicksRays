@@ -34,6 +34,7 @@ void RayTracer::CreateScene()
 	float Dx = -1.0f;
 	float Dy = 1.0f;
 	_ray._c = 2.41;
+	Color cTemp;
 	for (int y = 0; y < _height; y++)
 	{
 		for (int x = 0; x < _width; x++)
@@ -45,41 +46,41 @@ void RayTracer::CreateScene()
 			_ray._b = tempY;
 			index = x + (y * _width);
 
-			RayCast(index);
+			cTemp = RayCast(_tBuffer[index], _ray);
+			_pixels[index] = Pixel(cTemp._r, cTemp._g, cTemp._b);
 		}
 	}	
 }
 
-void RayTracer::RayCast(int index)
+Color RayTracer::RayCast(float & t, Ray & ray)
 {
+	float tempT = t;
 	Color tempColor = _background;
-	float tempT = _tBuffer[index];
-	Ray tempRay = _ray;
 	if (_numSurfaces != 0)
 	{
 		//First check to see if the camera rays hits anything
 		for (int i = 0; i < _numSpheres; i++)
 		{
-			TraceRay(_spheres[i], tempRay, tempColor, tempT);
+			TraceRay(_spheres[i], ray, tempColor, tempT);
 		}
 
 		for (int i = 0; i < _numQuads; i++)
 		{
-			TraceRay(_quads[i], tempRay, tempColor, tempT);
+			TraceRay(_quads[i], ray, tempColor, tempT);
 		}
 
 		for (int i = 0; i < _numPlanes; i++)
 		{
-			TraceRay(_planes[i], tempRay, tempColor, tempT);
+			TraceRay(_planes[i], ray, tempColor, tempT);
 		}
 
-	    _tBuffer[index] = tempT;
-	    _pixels[index] = Pixel(tempColor._r, tempColor._g, tempColor._b);
+	    t = tempT;
+	   
 
-		Vector vecToLight = _light._point - ComputeVector(tempT);
+		Vector vecToLight = _light._point - ComputePoint(ray, tempT);
 		float dToLight = vecToLight.GetMagnitude();
 		vecToLight.Normalize();
-		Ray tempRay = ComputeRay(ComputeVector(tempT), vecToLight);
+		Ray tempRay = ComputeRay(ComputePoint(ray, tempT), vecToLight);
 		tempRay._t = dToLight;
 
 		//Now lets see if an object is blocking the light of another
@@ -100,11 +101,13 @@ void RayTracer::RayCast(int index)
 
 		if ( tempRay._t < dToLight)
 		{
-			_pixels[index] = Pixel(0.0f, 0.0f, 0.0f);
+			return Color(0.0f,0.0f,0.0f);
+		}
+		else
+		{
+			return tempColor;
 		}
 	}
-	else
-		return;
 
 
 }
@@ -114,7 +117,8 @@ void RayTracer::TraceLightRay(Plane & p, Ray & r, float & t)
 	float tempT;
 	tempT = -(p._A * r._x0 + p._B * r._y0 + p._C * r._z0 + p._D)
 			   /(p._A * r._a + p._B * r._b + p._C * r._c);
-	if (tempT <= 0)
+
+	if (tempT <= 0.000001)
 		return;
 	if (tempT < t)
 		r._t = tempT;
@@ -122,6 +126,7 @@ void RayTracer::TraceLightRay(Plane & p, Ray & r, float & t)
 
 void RayTracer::TraceLightRay(Sphere & s, Ray & r, float & t)
 {
+
 	float a = (pow(r._a, 2) + pow(r._b, 2) + (pow(r._c, 2)));
 	float b = 2 * (r._a * ( r._x0 - s._x0) + r._b * (r._y0 - s._y0) + r._c * (r._z0 - s._z0));
 	float c = ( pow(r._x0 - s._x0, 2) + pow(r._y0 - s._y0, 2) + pow(r._z0 - s._z0, 2) - pow(s._r,2));
@@ -132,9 +137,28 @@ void RayTracer::TraceLightRay(Sphere & s, Ray & r, float & t)
 
 	float tTemp = min((-b + sqrt(disc)) / (2 * a), (-b - sqrt(disc)) / (2 * a));
 
-	if (tTemp <= 0)
+	if (tTemp <= 0.001)
 		return;
 
+	if (tTemp < t)
+		r._t = tTemp;
+}
+
+void RayTracer::TraceRefToLight(Sphere & s, Ray & r, float & t)
+{
+
+	float a = (pow(r._a, 2) + pow(r._b, 2) + (pow(r._c, 2)));
+	float b = 2 * (r._a * ( r._x0 - s._x0) + r._b * (r._y0 - s._y0) + r._c * (r._z0 - s._z0));
+	float c = ( pow(r._x0 - s._x0, 2) + pow(r._y0 - s._y0, 2) + pow(r._z0 - s._z0, 2) - pow(s._r,2));
+	float disc = pow(b,2) - ( 4 * a * c);
+
+	if (disc < 0)
+		return;
+
+	float tTemp = min((-b + sqrt(disc)) / (2 * a), (-b - sqrt(disc)) / (2 * a));
+
+	if (tTemp <= 0.0001)
+		return;
 
 	if (tTemp < t)
 		r._t = tTemp;
@@ -173,7 +197,7 @@ void RayTracer::TraceRay(Plane & p, Ray & r, Color & col, float & t)
 	r._t = -(p._A * r._x0 + p._B * r._y0 + p._C * r._z0 + p._D)
 			   /(p._A * r._a + p._B * r._b + p._C * r._c);
 	
-	Vector tempVec = ComputeVector(r._t);
+	Vector tempVec = ComputePoint(r, r._t);
 	Vector dirToPlane = tempVec - origin;
 	if ( dirToPlane.GetDotProduct(Vector(p._A, p._B, p._C)) > 0)
 		return;
@@ -207,6 +231,11 @@ void RayTracer::TraceRay(Plane & p, Ray & r, Color & col, float & t)
 
 void RayTracer::TraceRay(Sphere & s, Ray & r, Color & col, float & t)
 {
+	if ( s._currentSurface)
+	{
+		s._currentSurface = false;
+		return;
+	}
 	float a = (pow(r._a, 2) + pow(r._b, 2) + (pow(r._c, 2)));
 	float b = 2 * (r._a * ( r._x0 - s._x0) + r._b * (r._y0 - s._y0) + r._c * (r._z0 - s._z0));
 	float c = ( pow(r._x0 - s._x0, 2) + pow(r._y0 - s._y0, 2) + pow(r._z0 - s._z0, 2) - pow(s._r,2));
@@ -219,7 +248,10 @@ void RayTracer::TraceRay(Sphere & s, Ray & r, Color & col, float & t)
 	{
 		float tTemp = min((-b + sqrt(disc)) / (2 * a), (-b - sqrt(disc)) / (2 * a));
 
-		Vector tempVec = ComputeVector(tTemp);
+		Vector tempVec = ComputePoint(r, tTemp);
+
+
+
 		Vector pointToLight = _light._point - tempVec;
 		float pointToLightMag = pointToLight.GetMagnitude();
 		float atten = (1.0f / pow(pointToLightMag, 2));
@@ -231,16 +263,80 @@ void RayTracer::TraceRay(Sphere & s, Ray & r, Color & col, float & t)
 
 		Color lightColor = dot * _light._color * _light._intensity * s._color * atten;
 
-		if ( tTemp < t )
+		if ( tTemp < t && tTemp >= 0 )
 		{
 			t = tTemp;
-			col = lightColor;
+			if (s._reflective)
+			{
+				s._currentSurface = true;
+				float tReflect = s._reflectiveDistance;
+				tempVec.Negate();
+				float dotOnNormal = tempVec.GetDotProduct(surfaceNorm);
+				Vector vecOnNormal = surfaceNorm * dotOnNormal;
+				float scalar = 2.0f;
+				vecOnNormal = vecOnNormal * scalar;
+				Vector reflectVec = vecOnNormal - tempVec;
+				reflectVec.Normalize();
+
+				tempVec.Negate();
+				Ray reflectRay = ComputeRay( tempVec , reflectVec);
+
+				for (int i = 0; i < _numSpheres; i++)
+				{
+					TraceRay(_spheres[i], reflectRay, col, tReflect);
+				}
+
+				for (int i = 0; i < _numQuads; i++)
+				{
+					TraceRay(_quads[i], reflectRay, col, tReflect);
+				}
+	
+				for (int i = 0; i < _numPlanes; i++)
+				{
+					TraceRay(_planes[i], reflectRay, col, tReflect);
+				}
+
+				Vector vecToLight = _light._point - ComputePoint(reflectRay, tReflect);
+				float dToLight = vecToLight.GetMagnitude();
+				vecToLight.Normalize();
+				Ray tempRay = ComputeRay(ComputePoint(reflectRay, tReflect), vecToLight);
+				tempRay._t = dToLight;
+
+				//Now lets see if an object is blocking the light of another
+				for (int i = 0; i < _numSpheres; i++)
+				{
+					TraceRefToLight(_spheres[i], tempRay, dToLight);
+				}
+
+				for (int i = 0; i < _numQuads; i++)
+				{
+					TraceLightRay(_quads[i], tempRay, dToLight);
+				}
+
+				for (int i = 0; i < _numPlanes; i++)
+				{
+					TraceLightRay(_planes[i], tempRay, dToLight);
+				}
+
+				if ( tempRay._t < dToLight)
+				{
+					col = Color(0.0f,0.0f,0.0f);
+				}
+
+			}
+			else 
+			{
+				t = tTemp;
+				col = lightColor;
+			}
 		}
 		else
+		{
 			return;
+		}
 	}
-
 }
+
 
 void RayTracer::TraceRay(Quad & q, Ray & r, Color & col, float & t)
 {
@@ -262,7 +358,7 @@ void RayTracer::TraceRay(Quad & q, Ray & r, Color & col, float & t)
 	r._t = -(tempPlane._A * r._x0 + tempPlane._B * r._y0 + tempPlane._C * r._z0 + tempPlane._D)
 			   /(tempPlane._A * r._a + tempPlane._B * r._b + tempPlane._C * r._c);
 
-	Vector tempVector = ComputeVector(r._t);
+	Vector tempVector = ComputePoint(r, r._t);
 	Vector dirToPlane = tempVector - origin;
 	if ( dirToPlane.GetDotProduct(Vector(normal._x, normal._y, normal._z)) > 0)
 		return;
@@ -375,11 +471,11 @@ void RayTracer::RefreshPixels()
 
 }
 
-Vector RayTracer::ComputeVector(float scalar)
+Vector RayTracer::ComputePoint(Ray & ray, float scalar)
 {
-	float x = _ray._x0 + scalar * _ray._a;
-	float y = _ray._y0 + scalar * _ray._b;
-	float z = _ray._z0 + scalar * _ray._c;
+	float x = ray._x0 + scalar * ray._a;
+	float y = ray._y0 + scalar * ray._b;
+	float z = ray._z0 + scalar * ray._c;
 
 	return (Vector(x, y, z));
 }

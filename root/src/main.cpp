@@ -8,8 +8,8 @@ unsigned short Camera::numCameras = 0;
 
 int main()
 {
-    const int width = 800;
-    const int height = 600;
+    const int width = 1200;
+    const int height = 800;
 
 	Color background(1.0f, 1.0f, 1.0f);
 	RayTracer rayTrace(width, height, background);
@@ -50,14 +50,18 @@ int main()
 	sphere1._r = 0.3f;
 	sphere1._x0 = -0.4f;
 	sphere1._y0 = -0.2f;
-	sphere1._z0 = 2.0f;
+	sphere1._z0 = 3.0f;
 	sphere1._color = Color(1.0f, 0.0f, 1.0f);
+	sphere1._reflective = true;
+	sphere1._reflectiveDistance = 5.0f;
 	Sphere sphere2;
 	sphere2._r = 0.3f;
-	sphere2._x0 = 0.4f;
+	sphere2._x0 = 0.2f;
 	sphere2._y0 = -0.1f;
-	sphere2._z0 = 3.0f;
+	sphere2._z0 = 2.0f;
 	sphere2._color = Color(1.0f, 1.0f, 0.0f);
+	sphere2._reflective = false;
+	sphere2._reflectiveDistance = 10.0f;
 	Quad quad1;
 	quad1._b0 = Vector(-1.0f, -0.5f, -5.0f);
 	quad1._b1 = Vector(1.0f, -0.5f, -5.0f);
@@ -80,15 +84,15 @@ int main()
     {
 		if (GetAsyncKeyState(KEY_W) != 0)
 		{
-			sphere2._y0 -= .05;
+			rayTrace._spheres[1]._z0 -= .05;
 		}
 		if (GetAsyncKeyState(KEY_A) != 0)
 		{
-			sphere2._z0 += .01;
+			sphere1._z0 += .01;
 		}
 		if (GetAsyncKeyState(KEY_S) != 0)
 		{
-			sphere2._z0 -= .05;
+			sphere1._z0 -= .05;
 		}
 
 		rayTrace.CreateScene();

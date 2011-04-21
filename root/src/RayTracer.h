@@ -17,7 +17,6 @@ class RayTracer
 	std::vector<Pixel> _pixels;
 	std::vector<float> _tBuffer;
 	std::vector<Plane> _planes;
-	std::vector<Sphere> _spheres;
 	std::vector<Quad> _quads;
 	int _numSpheres;
 	int _numPlanes;
@@ -36,11 +35,16 @@ class RayTracer
 	void TraceLightRay(Plane & p, Ray & r, float & t);
 	void TraceLightRay(Sphere & s, Ray & r, float & t);
 	void TraceLightRay(Quad & q, Ray & r, float & t);
+	void ReflectedRay(Plane & p, Ray & r, float & t, Color & c);
+	void TraceRefToLight(Sphere & s, Ray & r, float & t);
+	void ReflectedRay(Sphere & s, Ray & r, float & t, Color & c);
+	void ReflectedRay(Quad & q, Ray & r, float & t, Color & c);
 	void FindTtoLight(Ray & r);
-	void RayCast(int index);
-	Vector ComputePoint(float t);
+	Color RayCast(float & t, Ray & ray);
+	Vector ComputePoint(Ray & ray, float t);
 	Ray ComputeRay(Vector & orig, Vector & dir);
 public: 
+	std::vector<Sphere> _spheres;
 	RayTracer(int width, int height, Color background);
 	~RayTracer(){};
 	
