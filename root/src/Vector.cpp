@@ -10,7 +10,9 @@ void Vector::Normalize()
 	tempVertex._y = (tempVertex._y/sqrt(sqrdValues));
 	tempVertex._z = (tempVertex._z/sqrt(sqrdValues));
 
-	*this = tempVertex;
+	_x = tempVertex._x;
+	_y = tempVertex._y;
+	_z = tempVertex._z;
 }
 
 Vector Vector::operator*(float & scalar)

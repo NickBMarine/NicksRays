@@ -18,6 +18,8 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
+		AMDCaPersistentConfig = Release|Win32
+		AMDCaPersistentStartup = NicksRays
 		AMDCaProjectFile = C:\Game Theory\NicksRays\root\projects\CodeAnalyst\NicksRays.caw
 	EndGlobalSection
 EndGlobal

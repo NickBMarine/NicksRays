@@ -8,8 +8,8 @@ unsigned short Camera::numCameras = 0;
 
 int main()
 {
-    const int width = 1200;
-    const int height = 800;
+    const int width = 800;
+    const int height = 600;
 
 	Color background(1.0f, 1.0f, 1.0f);
 	RayTracer rayTrace(width, height, background);
@@ -84,7 +84,7 @@ int main()
     {
 		if (GetAsyncKeyState(KEY_W) != 0)
 		{
-			rayTrace._spheres[1]._z0 -= .05;
+			rayTrace._spheres[0]._z0 -= .05;
 		}
 		if (GetAsyncKeyState(KEY_A) != 0)
 		{

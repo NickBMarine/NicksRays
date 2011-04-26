@@ -18,8 +18,8 @@ RayTracer::RayTracer(int width, int height, Color background)
 	_camera.SetCameraRight(Vector(1, 0, 0));
 	_camera.SetCameraUp(Vector(0,1,0));
 	_camera.SetCameraSpeed(0.1f);
-	_pixels.resize(width * height);
 	_tBuffer.resize(width * height);
+	ArraySplitter();
 	RefreshTBuff();
 	_ray._x0 = 0.0f;
 	_ray._y0 = 0.0f;
@@ -511,4 +511,9 @@ void RayTracer::AddSurface(Plane & plane)
 	_planes.push_back(plane);
 	_numPlanes++;
 	_numSurfaces++;
+}
+
+void RayTracer::ArraySplitter()
+{
+
 }

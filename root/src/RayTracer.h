@@ -13,8 +13,9 @@ using namespace PixelToaster;
 
 class RayTracer
 {
+	int _width, _height;
 	Camera _camera;
-	std::vector<Pixel> _pixels;
+	std::vector<Pixel> _pixels[4];
 	std::vector<float> _tBuffer;
 	std::vector<Plane> _planes;
 	std::vector<Quad> _quads;
@@ -25,10 +26,9 @@ class RayTracer
 	Ray _ray;
 	Light _light;
 	bool _dirty;
-	int _width;
-	int _height;
 	float _aspect;
 	Color _background;
+	void ArraySplitter();
 	void TraceRay(Plane & p, Ray & r, Color & c, float & t);
 	void TraceRay(Sphere & s, Ray & r, Color & c, float & t);
 	void TraceRay(Quad & q, Ray & r, Color & c, float & t);
