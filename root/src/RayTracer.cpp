@@ -591,4 +591,5 @@ void RayTracer::Merge(RayTracer rays[])
 			_tBuffer[index++] = rays[i]._tBuffer[j];
 		}
 	}
+	delete [] rays;
 }
