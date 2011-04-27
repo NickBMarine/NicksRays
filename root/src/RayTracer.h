@@ -14,12 +14,12 @@ using namespace PixelToaster;
 
 class RayTracer
 {
-	Camera _camera;
+	int _numThreads;
+	int _yBegin, _yEnd;
 	int _width, _height;
 	int _yCoordIndex;
-	int _yBegin, _yEnd;
-	int _numThreads;
 	std::vector<int> _yCoords;
+	Camera _camera;
 	std::vector<Pixel> _pixels;
 	std::vector<float> _tBuffer;
 	std::vector<Plane> _planes;

@@ -51,10 +51,8 @@ void RayTracer::CreateScene()
 				return;
 			}
 		}
-
 		WaitForMultipleObjects(_numThreads, ArrayofThreadHandles, TRUE, INFINITE);
 		Merge(rays);
-
 		for (int i = 0; i < _numThreads; i++)
 		{
 			CloseHandle(ArrayofThreadHandles[i]);
@@ -169,10 +167,10 @@ void RayTracer::TraceLightRay(Plane & p, Ray & r, float & t)
 void RayTracer::TraceLightRay(Sphere & s, Ray & r, float & t)
 {
 
-	float a = (pow(r._a, 2) + pow(r._b, 2) + (pow(r._c, 2)));
+	float a = ((r._a * r._a) + (r._b * r._b) + (r._c * r._c ));
 	float b = 2 * (r._a * ( r._x0 - s._x0) + r._b * (r._y0 - s._y0) + r._c * (r._z0 - s._z0));
-	float c = ( pow(r._x0 - s._x0, 2) + pow(r._y0 - s._y0, 2) + pow(r._z0 - s._z0, 2) - pow(s._r,2));
-	float disc = pow(b,2) - ( 4 * a * c);
+	float c = ( ((r._x0 - s._x0) * (r._x0 - s._x0)) + ((r._y0 - s._y0) * (r._y0 - s._y0)) + ((r._z0 - s._z0) * (r._z0 - s._z0)) - (s._r * s._r));
+	float disc = (b * b) - ( 4 * a * c);
 
 	if (disc < 0)
 		return;
@@ -189,10 +187,10 @@ void RayTracer::TraceLightRay(Sphere & s, Ray & r, float & t)
 void RayTracer::TraceRefToLight(Sphere & s, Ray & r, float & t)
 {
 
-	float a = (pow(r._a, 2) + pow(r._b, 2) + (pow(r._c, 2)));
+	float a = ((r._a * r._a) + (r._b * r._b) + (r._c * r._c ));
 	float b = 2 * (r._a * ( r._x0 - s._x0) + r._b * (r._y0 - s._y0) + r._c * (r._z0 - s._z0));
-	float c = ( pow(r._x0 - s._x0, 2) + pow(r._y0 - s._y0, 2) + pow(r._z0 - s._z0, 2) - pow(s._r,2));
-	float disc = pow(b,2) - ( 4 * a * c);
+	float c = ( ((r._x0 - s._x0) * (r._x0 - s._x0)) + ((r._y0 - s._y0) * (r._y0 - s._y0)) + ((r._z0 - s._z0) * (r._z0 - s._z0)) - (s._r * s._r));
+	float disc = (b * b) - ( 4 * a * c);
 
 	if (disc < 0)
 		return;
@@ -246,7 +244,7 @@ void RayTracer::TraceRay(Plane & p, Ray & r, Color & col, float & t)
 
 	Vector pointToLight = _light._point - tempVec;
 	float pointToLightMag = pointToLight.GetMagnitude();
-	float atten = (1.0f / pow(pointToLightMag, 2));
+	float atten = (1.0f / (pointToLightMag * pointToLightMag));
 	pointToLight.Normalize();
 	Vector surfaceNorm = Vector(p._A, p._B, p._C);
 	surfaceNorm.Normalize();
@@ -278,10 +276,10 @@ void RayTracer::TraceRay(Sphere & s, Ray & r, Color & col, float & t)
 		s._currentSurface = false;
 		return;
 	}
-	float a = (pow(r._a, 2) + pow(r._b, 2) + (pow(r._c, 2)));
+	float a = ((r._a * r._a) + (r._b * r._b) + (r._c * r._c ));
 	float b = 2 * (r._a * ( r._x0 - s._x0) + r._b * (r._y0 - s._y0) + r._c * (r._z0 - s._z0));
-	float c = ( pow(r._x0 - s._x0, 2) + pow(r._y0 - s._y0, 2) + pow(r._z0 - s._z0, 2) - pow(s._r,2));
-	float disc = pow(b,2) - ( 4 * a * c);
+	float c = ( ((r._x0 - s._x0) * (r._x0 - s._x0)) + ((r._y0 - s._y0) * (r._y0 - s._y0)) + ((r._z0 - s._z0) * (r._z0 - s._z0)) - (s._r * s._r));
+	float disc = (b * b) - ( 4 * a * c);
 
 
 	if ( disc < 0 )
@@ -296,7 +294,7 @@ void RayTracer::TraceRay(Sphere & s, Ray & r, Color & col, float & t)
 
 		Vector pointToLight = _light._point - tempVec;
 		float pointToLightMag = pointToLight.GetMagnitude();
-		float atten = (1.0f / pow(pointToLightMag, 2));
+		float atten = (1.0f / (pointToLightMag * pointToLightMag));
 		pointToLight.Normalize();
 		Vector surfaceNorm = tempVec - Vector(s._x0, s._y0, s._z0);
 		surfaceNorm.Normalize();

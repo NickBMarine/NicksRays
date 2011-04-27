@@ -102,4 +102,5 @@ int main()
 		rayTrace.RefreshThreadOrder();
 		rayTrace.RefreshPixels();
     }
+
 }
