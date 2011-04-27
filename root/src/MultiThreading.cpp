@@ -5,13 +5,13 @@ DWORD WINAPI Thread(LPVOID lpParam)
 {
 	int index;
 	RayTracer * rays = ((RayTracer*)lpParam);
-	float yBegin = rays->_yBegin;
-	float yEnd = rays->_yEnd;
+	int yBegin = rays->_yBegin;
+	int yEnd = rays->_yEnd;
 	float Sx = 2.0f/float(rays->_width);
 	float Sy = 2.0f/-float(rays->_height);
 	float Dx = -1.0f;
 	float Dy = 1.0f;
-	rays->_ray._c = 2.41;
+	rays->_ray._c = 2.41f;
 	Color cTemp;
 
 	for (int y = yBegin; y < yEnd; y++)

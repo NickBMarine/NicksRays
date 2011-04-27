@@ -85,15 +85,15 @@ int main()
     {
 		if (GetAsyncKeyState(KEY_W) != 0)
 		{
-			rayTrace._spheres[0]._z0 -= .05;
+			rayTrace._spheres[0]._z0 -= .05f;
 		}
 		if (GetAsyncKeyState(KEY_A) != 0)
 		{
-			sphere1._z0 += .01;
+			sphere1._z0 += .01f;
 		}
 		if (GetAsyncKeyState(KEY_S) != 0)
 		{
-			sphere1._z0 -= .05;
+			sphere1._z0 -= .05f;
 		}
 
 		rayTrace.CreateScene();

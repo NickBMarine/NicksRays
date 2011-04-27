@@ -203,7 +203,7 @@ void Camera::BuildMatrix(Matrix4x4 & camMatrix)
 
 void Camera::ListenKeys()
 {
-	float fac = 0.1;
+	float fac = 0.1f;
 
 	if (GetAsyncKeyState(VK_LSHIFT) != 0)
 	{
@@ -315,22 +315,22 @@ void Camera::CalcMouseRot(POINT & ptr)
 	}
 	if ( ptr.x > _mousePos.x)
 	{
-		tempAng._y = .03 * (ptr.x - _mousePos.x);
+		tempAng._y = .03f * (ptr.x - _mousePos.x);
 	}
 
 	if ( ptr.x < _mousePos.x)
 	{
-		tempAng._y = -.03 * (_mousePos.x - ptr.x);
+		tempAng._y = -.03f * (_mousePos.x - ptr.x);
 	}
 
 	if ( ptr.y > _mousePos.y)
 	{
-		tempAng._x = .03 * (ptr.y  - _mousePos.y);
+		tempAng._x = .03f * (ptr.y  - _mousePos.y);
 	}
 
 	if ( ptr.y < _mousePos.y)
 	{
-		tempAng._x = -.03 * (_mousePos.y - ptr.y);
+		tempAng._x = -.03f * (_mousePos.y - ptr.y);
 	}
 
 	Rotate(tempAng);

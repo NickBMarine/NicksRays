@@ -70,7 +70,7 @@ void RayTracer::CreateScene()
 		float Sy = 2.0f/-float(_height);
 		float Dx = -1.0f;
 		float Dy = 1.0f;
-		_ray._c = 2.41;
+		_ray._c = 2.41f;
 		Color cTemp;
 
 		for (int y = 0; y < _height; y++)
@@ -449,8 +449,8 @@ void RayTracer::TraceRay(Quad & q, Ray & r, Color & col, float & t)
 				tempPercent1 = tempPercent1/q._width;
 				tempPercent2 = tempPercent2/q._height;
 
-				int whole1 = tempPercent1 * 10;
-				int whole2 = tempPercent2 * 10;
+				float whole1 = float(tempPercent1) * 10;
+				float whole2 = float(tempPercent2) * 10;
 
 				if (whole1 == 10)
 					whole1 = 9;
@@ -462,9 +462,9 @@ void RayTracer::TraceRay(Quad & q, Ray & r, Color & col, float & t)
 					col = lightColor;
 					return;
 				}
-				else if ( (whole1 % 2) == 0)
+				else if ( (int(whole1) % 2) == 0)
 				{
-					if ( (whole2 % 2) == 0)
+					if ( (int(whole2) % 2) == 0)
 					{
 						col = Color(0.0f, 0.0f, 0.0f);
 						return;
@@ -474,7 +474,7 @@ void RayTracer::TraceRay(Quad & q, Ray & r, Color & col, float & t)
 				}
 				else 
 				{
-					if ( (whole2 % 2) == 0)
+					if ( (int(whole2) % 2) == 0)
 					{
 						col = lightColor;
 						return;
