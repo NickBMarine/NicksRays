@@ -149,7 +149,7 @@ Color RayTracer::RayCast(float & t, Ray & ray)
 		}
 	}
 
-
+	return _background;
 }
 
 void RayTracer::TraceLightRay(Plane & p, Ray & r, float & t)

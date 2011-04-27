@@ -8,7 +8,6 @@
 #include "Vector.h"
 #include "Camera.h"
 #include "Light.h"
-#include "ThreadContainer.h"
 #include <iostream>
 using namespace PixelToaster;
 
