@@ -15,6 +15,7 @@
     <ClCompile Include="..\src\Color.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\Matrix4x4.cpp" />
+    <ClCompile Include="..\src\MultiThreading.cpp" />
     <ClCompile Include="..\src\RayTracer.cpp" />
     <ClCompile Include="..\src\Vector.cpp" />
   </ItemGroup>
@@ -24,6 +25,7 @@
     <ClInclude Include="..\src\Keys.h" />
     <ClInclude Include="..\src\Light.h" />
     <ClInclude Include="..\src\Matrix4x4.h" />
+    <ClInclude Include="..\src\MultiThreading.h" />
     <ClInclude Include="..\src\Plane.h" />
     <ClInclude Include="..\src\Quad.h" />
     <ClInclude Include="..\src\Ray.h" />

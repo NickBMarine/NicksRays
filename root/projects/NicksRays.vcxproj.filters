@@ -36,6 +36,9 @@
     <ClCompile Include="..\src\RayTracer.cpp">
       <Filter>Driver</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\MultiThreading.cpp">
+      <Filter>Driver</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Matrix4x4.h">
@@ -70,6 +73,9 @@
     </ClInclude>
     <ClInclude Include="..\src\Light.h">
       <Filter>Light/Color</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\MultiThreading.h">
+      <Filter>Driver</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

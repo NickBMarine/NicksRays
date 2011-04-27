@@ -13,6 +13,7 @@ int main()
 
 	Color background(1.0f, 1.0f, 1.0f);
 	RayTracer rayTrace(width, height, background);
+	rayTrace.SetThreads(3);
 
 	Display display( "Floating Point Example", width, height );
 
@@ -98,6 +99,7 @@ int main()
 		rayTrace.CreateScene();
 
 		display.update( rayTrace.FetchPixels() );
+		rayTrace.RefreshThreadOrder();
 		rayTrace.RefreshPixels();
     }
 }

@@ -2,6 +2,8 @@
 
 RayTracer::RayTracer(int width, int height, Color background)
 {
+	_numThreads = 0;
+	_yCoordIndex = 0;
 	_width = width;
 	_height = height;
 	_numSurfaces = 0;
@@ -13,13 +15,13 @@ RayTracer::RayTracer(int width, int height, Color background)
 	_light._color = Color(1.0f, 1.0f, 1.0f);
 	_light._intensity = 1.0f;
 	_light._point = Vector(0.0f, 0.75f, 2.5f);
+	_pixels.resize(width * height);
 	_background = background;
 	_camera.SetCameraForward(Vector(0,0,1));
 	_camera.SetCameraRight(Vector(1, 0, 0));
 	_camera.SetCameraUp(Vector(0,1,0));
 	_camera.SetCameraSpeed(0.1f);
 	_tBuffer.resize(width * height);
-	ArraySplitter();
 	RefreshTBuff();
 	_ray._x0 = 0.0f;
 	_ray._y0 = 0.0f;
@@ -28,28 +30,68 @@ RayTracer::RayTracer(int width, int height, Color background)
 
 void RayTracer::CreateScene()
 {
-	int index;
-	float Sx = 2.0f/float(_width);
-	float Sy = 2.0f/-float(_height);
-	float Dx = -1.0f;
-	float Dy = 1.0f;
-	_ray._c = 2.41;
-	Color cTemp;
-	for (int y = 0; y < _height; y++)
+	if (_numThreads > 0 )
 	{
-		for (int x = 0; x < _width; x++)
-		{
-			float tempX = x * Sx + Dx;
-			float tempY = y * Sy + Dy;
-			tempX *= _aspect;
-			_ray._a = tempX;
-			_ray._b = tempY;
-			index = x + (y * _width);
+		HANDLE * ArrayofThreadHandles = new HANDLE[_numThreads];
+		RayTracer * rays = new RayTracer[_numThreads];
 
-			cTemp = RayCast(_tBuffer[index], _ray);
-			_pixels[index] = Pixel(cTemp._r, cTemp._g, cTemp._b);
+		for (int i = 0; i < _numThreads; i++)
+		{
+			rays[i] = *this;
+			rays[i]._yBegin = _yCoords[i] = (i * _height)/_numThreads;
+			rays[i]._yEnd = _yCoords[i] = ((i + 1) * _height/_numThreads);
 		}
-	}	
+
+		for (int i = 0; i < _numThreads; i++)
+		{
+			ArrayofThreadHandles[i] = CreateThread(NULL, 0, Thread, &rays[i], 0, NULL);
+			if (ArrayofThreadHandles[i] == NULL)
+			{
+				cout << "Thread could not be created! FAIL!\n\n";
+				return;
+			}
+		}
+
+		WaitForMultipleObjects(_numThreads, ArrayofThreadHandles, TRUE, INFINITE);
+		Merge(rays);
+
+		for (int i = 0; i < _numThreads; i++)
+		{
+			CloseHandle(ArrayofThreadHandles[i]);
+		}
+
+	}
+	else
+	{
+		int index;
+		int quarterWayHeight = _height - ((_height * 3) / 4);  
+		int halfWayHeight = _height - (_height/2);
+		int threeForthWayHeight = _height - (_height/4);
+		int threeForthWayWidth = _width - (_width/4);
+		float Sx = 2.0f/float(_width);
+		float Sy = 2.0f/-float(_height);
+		float Dx = -1.0f;
+		float Dy = 1.0f;
+		_ray._c = 2.41;
+		Color cTemp;
+
+		for (int y = 0; y < _height; y++)
+		{
+			for (int x = 0; x < _width; x++)
+			{
+				float tempX = x * Sx + Dx;
+				float tempY = y * Sy + Dy;
+				tempX *= _aspect;
+				_ray._a = tempX;
+				_ray._b = tempY;
+				index = x + (y * _width);
+
+				cTemp = RayCast(_tBuffer[index], _ray);
+				_pixels[index] = Pixel(cTemp._r, cTemp._g, cTemp._b);
+			}
+		}
+	}
+
 }
 
 Color RayTracer::RayCast(float & t, Ray & ray)
@@ -513,7 +555,42 @@ void RayTracer::AddSurface(Plane & plane)
 	_numSurfaces++;
 }
 
-void RayTracer::ArraySplitter()
+void RayTracer::YCoordCalculator()
 {
+	if (_numThreads == 0)
+	{
+		_yCoords.resize(0);
+		_yCoordIndex = 0;
+		return;
+	}
 
+	_yCoords.resize(_numThreads+1);
+	_yCoordIndex = 0;
+
+	for (int i = 0; i < _numThreads+1; i++)
+	{
+		_yCoords[i] = (i * _height)/_numThreads;
+	}
+}
+
+void RayTracer::RefreshThreadOrder()
+{
+	_yCoordIndex = 0;
+}
+
+void RayTracer::Merge(RayTracer rays[])
+{
+	_pixels = rays[0]._pixels;
+	_tBuffer = rays[0]._tBuffer;
+
+	int index = ((rays[0]._yEnd) * _width);
+
+	for ( int i = 1; i < _numThreads; i++)
+	{
+		for (int j = rays[i]._yBegin * _width; j < rays[i]._yEnd * _width; j++)
+		{
+			_pixels[index] = rays[i]._pixels[j];
+			_tBuffer[index++] = rays[i]._tBuffer[j];
+		}
+	}
 }
