@@ -13,15 +13,18 @@
   <ItemGroup>
     <ClCompile Include="..\src\Camera.cpp" />
     <ClCompile Include="..\src\Color.cpp" />
+    <ClCompile Include="..\src\FPSOutput.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\Matrix4x4.cpp" />
     <ClCompile Include="..\src\MultiThreading.cpp" />
     <ClCompile Include="..\src\RayTracer.cpp" />
+    <ClCompile Include="..\src\StopWatch.cpp" />
     <ClCompile Include="..\src\Vector.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Camera.h" />
     <ClInclude Include="..\src\Color.h" />
+    <ClInclude Include="..\src\FPSOutput.h" />
     <ClInclude Include="..\src\Keys.h" />
     <ClInclude Include="..\src\Light.h" />
     <ClInclude Include="..\src\Matrix4x4.h" />
@@ -31,6 +34,8 @@
     <ClInclude Include="..\src\Ray.h" />
     <ClInclude Include="..\src\RayTracer.h" />
     <ClInclude Include="..\src\Sphere.h" />
+    <ClInclude Include="..\src\StopWatch.h" />
+    <ClInclude Include="..\src\ThreadContainer.h" />
     <ClInclude Include="..\src\Vector.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

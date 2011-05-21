@@ -11,6 +11,8 @@ RayTracer::RayTracer(int width, int height, Color background)
 	_numQuads = 0;
 	_numSpheres = 0;
 	_dirty = true;
+	_done = false;
+	_createScene = false;
 	_aspect = (float(_width)/float(_height));
 	_light._color = Color(1.0f, 1.0f, 1.0f);
 	_light._intensity = 1.0f;
@@ -26,37 +28,101 @@ RayTracer::RayTracer(int width, int height, Color background)
 	_ray._x0 = 0.0f;
 	_ray._y0 = 0.0f;
 	_ray._z0 = 0.0f;
+
+}
+
+RayTracer::~RayTracer()
+{
+	for (int i = 0; i < _numThreads; i++)
+	{
+		CloseHandle(_arrayofThreadHandles);
+	}
+
+	delete [] _threads;
+	delete [] _arrayofThreadHandles;
+}
+
+void RayTracer::CreateThreadHandles()
+{
+	_threads = new ThreadContainer[_numThreads];
+	for (int i = 0; i < _numThreads + 1; i++)
+	{
+		if ( i != _numThreads)
+		{
+			_threads[i]._rayTrace = this;
+			_threads[i]._yBegin = (float)(i * _height)/(_numThreads +1);
+			_threads[i]._yEnd = (float)((i + 1) * _height/(_numThreads+1));
+			_threads[i]._width = (float)_width;
+			_threads[i]._height = (float)_height;
+			_threads[i]._ray = _ray;
+			_threads[i]._sceneCheck = false;
+		}
+		else
+		{
+			_yBegin = (i * _height)/(_numThreads+1);
+			_yEnd = ((i + 1) * _height/(_numThreads+1));
+		}
+	}
+
+	_arrayofThreadHandles = new HANDLE[_numThreads];
+	for (int i = 0; i < _numThreads; i++)
+	{
+		_arrayofThreadHandles[i] = CreateThread(NULL, 0, Thread, &_threads[i], 0, NULL);
+		if (_arrayofThreadHandles[i] == NULL)
+		{
+			cout << "Thread could not be created! FAIL!\n\n";
+			return;
+		}
+	}
+}
+
+bool RayTracer::SceneReady()
+{
+	for (int i = 0; i < _numThreads; ++i)
+	{
+		if (_threads[i]._sceneCheck)
+			return false;
+	}
+	return true;
 }
 
 void RayTracer::CreateScene()
 {
 	if (_numThreads > 0 )
 	{
-		HANDLE * ArrayofThreadHandles = new HANDLE[_numThreads];
-		RayTracer * rays = new RayTracer[_numThreads];
-
-		for (int i = 0; i < _numThreads; i++)
+		for (int i = 0; i < _numThreads; ++i)
 		{
-			rays[i] = *this;
-			rays[i]._yBegin = _yCoords[i] = (i * _height)/_numThreads;
-			rays[i]._yEnd = _yCoords[i] = ((i + 1) * _height/_numThreads);
+			_threads[i]._sceneCheck = true;
 		}
+		
+		int index;
+		int quarterWayHeight = _height - ((_height * 3) / 4);  
+		int halfWayHeight = _height - (_height/2);
+		int threeForthWayHeight = _height - (_height/4);
+		int threeForthWayWidth = _width - (_width/4);
+		float Sx = 2.0f/float(_width);
+		float Sy = 2.0f/-float(_height);
+		float Dx = -1.0f;
+		float Dy = 1.0f;
+		_ray._c = 2.41f;
+		Color cTemp;
 
-		for (int i = 0; i < _numThreads; i++)
+		for (int y = _yBegin; y < _yEnd; y++)
 		{
-			ArrayofThreadHandles[i] = CreateThread(NULL, 0, Thread, &rays[i], 0, NULL);
-			if (ArrayofThreadHandles[i] == NULL)
+			for (int x = 0; x < _width; x++)
 			{
-				cout << "Thread could not be created! FAIL!\n\n";
-				return;
+				float tempX = x * Sx + Dx;
+				float tempY = y * Sy + Dy;
+				tempX *= _aspect;
+				_ray._a = tempX;
+				_ray._b = tempY;
+				index = x + (y * _width);
+
+				cTemp = RayCast(_tBuffer[index], _ray);
+				_pixels[index] = Pixel(cTemp._r, cTemp._g, cTemp._b);
 			}
 		}
-		WaitForMultipleObjects(_numThreads, ArrayofThreadHandles, TRUE, INFINITE);
-		Merge(rays);
-		for (int i = 0; i < _numThreads; i++)
-		{
-			CloseHandle(ArrayofThreadHandles[i]);
-		}
+
 
 	}
 	else
@@ -158,7 +224,7 @@ void RayTracer::TraceLightRay(Plane & p, Ray & r, float & t)
 	tempT = -(p._A * r._x0 + p._B * r._y0 + p._C * r._z0 + p._D)
 			   /(p._A * r._a + p._B * r._b + p._C * r._c);
 
-	if (tempT <= 0.000001)
+	if (tempT <= 0.001)
 		return;
 	if (tempT < t)
 		r._t = tempT;
@@ -177,7 +243,7 @@ void RayTracer::TraceLightRay(Sphere & s, Ray & r, float & t)
 
 	float tTemp = min((-b + sqrt(disc)) / (2 * a), (-b - sqrt(disc)) / (2 * a));
 
-	if (tTemp <= 0.001)
+	if (tTemp < 0.001)
 		return;
 
 	if (tTemp < t)
@@ -197,7 +263,7 @@ void RayTracer::TraceRefToLight(Sphere & s, Ray & r, float & t)
 
 	float tTemp = min((-b + sqrt(disc)) / (2 * a), (-b - sqrt(disc)) / (2 * a));
 
-	if (tTemp <= 0.0001)
+	if (tTemp < 0.001)
 		return;
 
 	if (tTemp < t)
@@ -224,7 +290,7 @@ void RayTracer::TraceLightRay(Quad & q, Ray & r, float & t)
 	tempT = -(tempPlane._A * r._x0 + tempPlane._B * r._y0 + tempPlane._C * r._z0 + tempPlane._D)
 			   /(tempPlane._A * r._a + tempPlane._B * r._b + tempPlane._C * r._c);
 
-	if (tempT <= 0)
+	if (tempT <= 0.1)
 		return;
 
 	if (tempT < t)
@@ -256,9 +322,8 @@ void RayTracer::TraceRay(Plane & p, Ray & r, Color & col, float & t)
 	Color lightColor = dot * _light._color * _light._intensity * p._color * atten;
 
 
-	if ( r._t <= 0.0f )
+	if ( r._t <= 0.001f )
 		return;
-
 	else if ( r._t < t)
 	{
 		t = r._t;
@@ -282,7 +347,7 @@ void RayTracer::TraceRay(Sphere & s, Ray & r, Color & col, float & t)
 	float disc = (b * b) - ( 4 * a * c);
 
 
-	if ( disc < 0 )
+	if ( disc < 0.01 )
 		return;
 	else
 	{
@@ -551,24 +616,6 @@ void RayTracer::AddSurface(Plane & plane)
 	_planes.push_back(plane);
 	_numPlanes++;
 	_numSurfaces++;
-}
-
-void RayTracer::YCoordCalculator()
-{
-	if (_numThreads == 0)
-	{
-		_yCoords.resize(0);
-		_yCoordIndex = 0;
-		return;
-	}
-
-	_yCoords.resize(_numThreads+1);
-	_yCoordIndex = 0;
-
-	for (int i = 0; i < _numThreads+1; i++)
-	{
-		_yCoords[i] = (i * _height)/_numThreads;
-	}
 }
 
 void RayTracer::RefreshThreadOrder()

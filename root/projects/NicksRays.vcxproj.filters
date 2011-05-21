@@ -16,6 +16,9 @@
     <Filter Include="Driver">
       <UniqueIdentifier>{eca33223-8b0b-4232-85cd-e2e764f11b55}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Frames">
+      <UniqueIdentifier>{cd534eaf-0705-4f50-b46a-66824393c12e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\Matrix4x4.cpp">
@@ -38,6 +41,12 @@
     </ClCompile>
     <ClCompile Include="..\src\MultiThreading.cpp">
       <Filter>Driver</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\FPSOutput.cpp">
+      <Filter>Frames</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\StopWatch.cpp">
+      <Filter>Frames</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -75,6 +84,15 @@
       <Filter>Light/Color</Filter>
     </ClInclude>
     <ClInclude Include="..\src\MultiThreading.h">
+      <Filter>Driver</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\FPSOutput.h">
+      <Filter>Frames</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\StopWatch.h">
+      <Filter>Frames</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ThreadContainer.h">
       <Filter>Driver</Filter>
     </ClInclude>
   </ItemGroup>

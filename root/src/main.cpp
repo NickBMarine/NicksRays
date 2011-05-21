@@ -1,5 +1,6 @@
 #include "PixelToaster.h"
 #include "RayTracer.h"
+#include "FPSOutput.h"
 #include <Windows.h>
 
 using namespace PixelToaster;
@@ -8,14 +9,18 @@ unsigned short Camera::numCameras = 0;
 
 int main()
 {
-    const int width = 800;
-    const int height = 600;
-
+    const int WIDTH = 800;
+    const int HEIGHT = 600;
+	const int THREADS = 3;
 	Color background(1.0f, 1.0f, 1.0f);
-	RayTracer rayTrace(width, height, background);
-	rayTrace.SetThreads(4);
+	RayTracer rayTrace(WIDTH, HEIGHT, background);
+	rayTrace.SetThreads(THREADS);
 
-	Display display( "Floating Point Example", width, height );
+	FPSOutput fps(5);
+
+
+
+	Display display( "Floating Point Example", WIDTH, HEIGHT);
 
 	Plane plane1;
 	plane1._A = 1.0f;
@@ -89,7 +94,7 @@ int main()
 		}
 		if (GetAsyncKeyState(KEY_A) != 0)
 		{
-			sphere1._z0 += .01f;
+			rayTrace._spheres[0]._x0 += .01f;
 		}
 		if (GetAsyncKeyState(KEY_S) != 0)
 		{
@@ -97,10 +102,13 @@ int main()
 		}
 
 		rayTrace.CreateScene();
-
+		while (!rayTrace.SceneReady())
+		{
+		}
 		display.update( rayTrace.FetchPixels() );
+		fps.Update();
 		rayTrace.RefreshThreadOrder();
 		rayTrace.RefreshPixels();
     }
-
+	rayTrace._done = true;
 }

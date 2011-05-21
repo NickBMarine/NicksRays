@@ -1,32 +1,37 @@
 #include "MultiThreading.h"
 
-
 DWORD WINAPI Thread(LPVOID lpParam)
 {
 	int index;
-	RayTracer * rays = ((RayTracer*)lpParam);
-	int yBegin = rays->_yBegin;
-	int yEnd = rays->_yEnd;
-	float Sx = 2.0f/float(rays->_width);
-	float Sy = 2.0f/-float(rays->_height);
+	ThreadContainer * container = ((ThreadContainer*)lpParam);
+	int yBegin = (int)container->_yBegin;
+	int yEnd = (int)container->_yEnd;
+	float Sx = 2.0f/float(container->_width);
+	float Sy = 2.0f/-float(container->_height);
 	float Dx = -1.0f;
 	float Dy = 1.0f;
-	rays->_ray._c = 2.41f;
+	container->_ray._c = 2.41f;
 	Color cTemp;
 
-	for (int y = yBegin; y < yEnd; y++)
+	while (!container->_rayTrace->_done)
 	{
-		for (int x = 0; x < rays->_width; x++)
+		while (container->_sceneCheck)
 		{
-			float tempX = x * Sx + Dx;
-			float tempY = y * Sy + Dy;
-			tempX *= rays->_aspect;
-			rays->_ray._a = tempX;
-			rays->_ray._b = tempY;
-			index = x + (y * rays->_width);
-
-			cTemp = rays->RayCast(rays->_tBuffer[index], rays->_ray);
-			rays->_pixels[index] = Pixel(cTemp._r, cTemp._g, cTemp._b);
+			for (int y = yBegin; y < yEnd; y++)
+			{
+				for (int x = 0; x < container->_width; x++)
+				{
+					float tempX = (float)x * Sx + Dx;
+					float tempY = (float)y * Sy + Dy;
+					tempX *= container->_rayTrace->_aspect;
+					container->_ray._a = tempX;
+					container->_ray._b = tempY;
+					index = x + (int)(y * container->_width);
+					cTemp = container->_rayTrace->RayCast(container->_rayTrace->_tBuffer[index], container->_ray);
+					container->_rayTrace->_pixels[index] = Pixel(cTemp._r, cTemp._g, cTemp._b);
+				}
+			}
+			container->_sceneCheck = false;
 		}
 	}
 

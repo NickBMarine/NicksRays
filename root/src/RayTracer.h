@@ -8,6 +8,7 @@
 #include "Vector.h"
 #include "Camera.h"
 #include "Light.h"
+#include "ThreadContainer.h"
 #include <iostream>
 using namespace PixelToaster;
 
@@ -17,7 +18,9 @@ class RayTracer
 	int _yBegin, _yEnd;
 	int _width, _height;
 	int _yCoordIndex;
-	std::vector<int> _yCoords;
+	ThreadContainer * _threads;
+	HANDLE * _arrayofThreadHandles;
+	//std::vector<int> _yCoords;
 	Camera _camera;
 	std::vector<Pixel> _pixels;
 	std::vector<float> _tBuffer;
@@ -30,6 +33,7 @@ class RayTracer
 	Ray _ray;
 	Light _light;
 	bool _dirty;
+	bool _createScene;
 	float _aspect;
 	Color _background;
 	void TraceRay(Plane & p, Ray & r, Color & c, float & t);
@@ -43,18 +47,20 @@ class RayTracer
 	void ReflectedRay(Sphere & s, Ray & r, float & t, Color & c);
 	void ReflectedRay(Quad & q, Ray & r, float & t, Color & c);
 	void FindTtoLight(Ray & r);
+	void CreateThreadHandles();
 	Color RayCast(float & t, Ray & ray);
 	Vector ComputePoint(Ray & ray, float t);
 	Ray ComputeRay(Vector & orig, Vector & dir);
 public: 
+	bool _done;
 	std::vector<Sphere> _spheres;
 	RayTracer(){};
+	~RayTracer();
 	RayTracer(int width, int height, Color background);
-	~RayTracer(){};
 	
 	void RefreshThreadOrder();
-	void SetThreads(int num) { _numThreads = num; 	YCoordCalculator();}
-	void YCoordCalculator();
+	bool SceneReady();
+	void SetThreads(int num) { _numThreads = num; CreateThreadHandles();}
 	void AddSurface(Sphere & sphere);
 	void AddSurface(Quad & quad);
 	void AddSurface(Plane & plane);
@@ -70,11 +76,4 @@ public:
 	void RefreshPixels();
 	void Merge(RayTracer []);
 	friend DWORD WINAPI Thread(LPVOID lpParam);
-};
-
-struct ThreadsContainer
-{
-	RayTracer * rayTrace;
-	int yBegin;
-	int yEnd;
 };
